@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Build output
+Debug/
+Release/
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+
+# IDE files
+.settings/
+.cproject
+.project
+*.launch
+
+# CubeMX backup files
+*.bak
