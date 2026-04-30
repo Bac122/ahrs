@@ -111,7 +111,8 @@ int main(void)
   uint8_t accel_buf[6];
   uint8_t accel_reg = 0x3B;
 
-
+  uint8_t gyro_buf[6];
+  uint8_t gyro_reg = 0x43;
 
 
   /* USER CODE END 2 */
@@ -133,7 +134,20 @@ int main(void)
 	  float az = accel_z / 16384.0f;
 
 	  char uart_buf[100];
-	  int len = sprintf(uart_buf, "X:%d Y:%d Z:%d\r\n", (int)(ax*1000), (int)(ay*1000), (int)(az*1000));
+
+
+	  HAL_I2C_Master_Transmit(&hi2c1, (0x68 << 1), &gyro_reg, 1, HAL_MAX_DELAY);
+	  HAL_I2C_Master_Receive(&hi2c1, (0x68 << 1), gyro_buf, 6, HAL_MAX_DELAY);
+
+	  int16_t gyro_x = (int16_t)(gyro_buf[0] << 8 | gyro_buf[1]);
+	  int16_t gyro_y = (int16_t)(gyro_buf[2] << 8 | gyro_buf[3]);
+	  int16_t gyro_z = (int16_t)(gyro_buf[4] << 8 | gyro_buf[5]);
+
+	  float gx = gyro_x / 131.0f;
+	  float gy = gyro_y / 131.0f;
+	  float gz = gyro_z / 131.0f;
+
+	  int len = sprintf(uart_buf, "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d\r\n", (int)(ax*1000), (int)(ay*1000), (int)(az*1000), (int)(gx*100), (int)(gy*100), (int)(gz*100));
 	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, len, HAL_MAX_DELAY);
 
 	  if (who_am_i_ok)
