@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -114,6 +115,10 @@ int main(void)
   uint8_t gyro_buf[6];
   uint8_t gyro_reg = 0x43;
 
+  float alpha = 0.98f;
+  float comp_angle_x = 0.0f;
+  float comp_angle_y = 0.0f;
+  float dt = 0.01f;  // 100Hz loop, 10ms
 
   /* USER CODE END 2 */
 
@@ -147,20 +152,22 @@ int main(void)
 	  float gy = gyro_y / 131.0f;
 	  float gz = gyro_z / 131.0f;
 
-	  int len = sprintf(uart_buf, "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d\r\n", (int)(ax*1000), (int)(ay*1000), (int)(az*1000), (int)(gx*100), (int)(gy*100), (int)(gz*100));
+
+	  float accel_angle_x = atan2f(ay, az) * 180.0f / 3.14159f;
+	  float accel_angle_y = atan2f(-ax, az) * 180.0f / 3.14159f;
+
+	  comp_angle_x = alpha * (comp_angle_x + gx * dt) + (1.0f - alpha) * accel_angle_x;
+	  comp_angle_y = alpha * (comp_angle_y + gy * dt) + (1.0f - alpha) * accel_angle_y;
+
+
+	  int len = sprintf(uart_buf, "AX:%d AY:%d AZ:%d GX:%d GY:%d GZ:%d CX:%d CY:%d\r\n",
+			  (int)(ax*1000), (int)(ay*1000), (int)(az*1000),
+			  (int)(gx*100), (int)(gy*100), (int)(gz*100),
+			  (int)(comp_angle_x), (int)(comp_angle_y));
+
 	  HAL_UART_Transmit(&huart2, (uint8_t*)uart_buf, len, HAL_MAX_DELAY);
 
-	  if (who_am_i_ok)
-	  {
-		  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-		  HAL_Delay(1000);
-	  }
-	  else
-	  {
-	      HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-	      HAL_Delay(100);
-	  }
-	  HAL_Delay(100);
+	  HAL_Delay(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
